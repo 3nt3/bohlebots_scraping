@@ -7,6 +7,7 @@ import time
 import threading
 from flask import Flask, jsonify
 import psycopg2
+from flask_cors import CORS
 
 db = psycopg2.connect(database="asdf", user="postgres",
                       password="asdf", host="db", port="5432")
@@ -23,6 +24,7 @@ cursor.execute('''CREATE TABLE IF NOT EXISTS entries (
 db.commit()
 
 app = Flask(__name__)
+CORS(app)
 
 
 @app.route('/')
