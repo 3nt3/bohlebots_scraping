@@ -5,7 +5,7 @@ import sqlite3
 from sys import stdout
 import time
 import threading
-from flask import Flask
+from flask import Flask, jsonify
 import psycopg2
 
 db = psycopg2.connect(database="asdf", user="postgres",
@@ -27,7 +27,10 @@ app = Flask(__name__)
 
 @app.route('/')
 def api():
-    return "hello world"
+    cursor.execute("SELECT * FROM entries")
+    entries = cursor.fetchall()
+
+    return jsonify(entries)
 
 
 def scrape():
