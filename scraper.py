@@ -4,30 +4,41 @@ from datetime import datetime
 import sqlite3
 from sys import stdout
 import time
+import threading
+from flask import Flask
+import psycopg2
 
-db = sqlite3.connect('lol.sqlite3')
+db = psycopg2.connect(database="asdf", user="postgres",
+                      password="asdf", host="db", port="5432")
+
 cursor = db.cursor()
 
 # create table
 cursor.execute('''CREATE TABLE IF NOT EXISTS entries (
-    id integer PRIMARY KEY AUTOINCREMENT ,
+    id SERIAL PRIMARY KEY,
     name varchar(50),
     opened_at TIMESTAMP,
     UNIQUE(name, opened_at) 
     )''')
 db.commit()
 
-while True:
+app = Flask(__name__)
+
+
+@app.route('/')
+def api():
+    return "hello world"
+
+
+def scrape():
+    cursor = db.cursor()
     print("[ * ] querying... ", end="")
     r = requests.get('http://bohlebots.de/door/liste.php')
     if not r.ok:
         print(f"http request failed with status {r.status_code}")
-        exit()
+        return
     print(f"status {r.status_code}")
 
-    entries = []
-
-    print("[ * ] parsing... ")
     soup = BeautifulSoup(r.text, 'html.parser')
     for table in soup.find_all('table'):
         trs = []
@@ -38,15 +49,18 @@ while True:
         for i, tr in enumerate(trs):
             tds = tr.find_all('td')
             if tds[0].text.strip() != "":
-                print(f"[ * ] row {i}/{len(trs)-2}", end='\r')
                 entry = (tds[0].text.strip(), datetime.strptime(
-                    tds[1].text.strip(), '%Y-%m-%d-%H-%M-%S').timestamp())
+                    tds[1].text.strip(), '%Y-%m-%d-%H-%M-%S'))
 
-                cursor.executemany(
-                    '''INSERT OR IGNORE INTO entries (name, opened_at) VALUES (?, ?) ''', [entry])
-        print('')
+                cursor.execute(
+                    '''INSERT INTO entries (name, opened_at) VALUES (%s, %s) ON CONFLICT DO NOTHING ''', (entry[0], entry[1]))
 
     db.commit()
-    time.sleep(1)
+
+
+threading.Timer(5, scrape).start()
+
+if __name__ == "__main__":
+    app.run(debug=True, host="0.0.0.0", port=8000)
 
 db.close()
