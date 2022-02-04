@@ -30,7 +30,15 @@ def api():
     cursor.execute("SELECT * FROM entries")
     entries = cursor.fetchall()
 
-    return jsonify(entries)
+    entries_fmt = []
+    print(entries)
+    for entry in entries:
+        entry_fmt = list(entry)
+        entry_fmt[2] = entry[2].timestamp()
+        entry_fmt = tuple(entry_fmt)
+        entries_fmt.append(entry_fmt)
+
+    return jsonify(entries_fmt)
 
 
 def scrape():
