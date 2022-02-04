@@ -1,19 +1,20 @@
-version: '3'
+version: "3"
 
 services:
   db:
-    image: 'postgres'
+    image: "postgres"
     restart: always
     environment:
       POSTGRES_PASSWORD: asdf
-      POSTGRES_DB: 'asdf'
+      POSTGRES_DB: "asdf"
+    volumes:
+      - "./db_data:/var/lib/postgresql/data/"
 
   app:
-    build: '.'
+    build: "."
     restart: always
     ports:
-      - '8000:8000'
+      - "8000:8000"
 
     volumes:
-      - './:/app'
-  
+      - "./:/app"
